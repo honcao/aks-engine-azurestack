@@ -5,6 +5,7 @@
 
 ```
 sudo su
+export ETCDCTL_API=3
 export ETCDCTL_CERT=/etc/kubernetes/certs/etcdclient.crt
 export ETCDCTL_CACERT=/etc/kubernetes/certs/ca.crt
 export ETCDCTL_KEY=/etc/kubernetes/certs/etcdclient.key
