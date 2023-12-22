@@ -95,3 +95,8 @@ etcdctl endpoint status --write-out=table
 ```
 etcdctl endpoint health --write-out=table
 ```
+
+# 7 Enable the etcd service
+```
+systemctl enable etcd
+```
