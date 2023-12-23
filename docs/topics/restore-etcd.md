@@ -1,7 +1,20 @@
+# Scenario:
+The Kubernetes cluster consists of 3 control plane nodes. One of these nodes, specifically named (for example, *-master-*-0), has encountered a corruption issue with its etcd data disk. 
 
+The steps outlined below detail the recovery procedure for this situation. 
 
-# 1. Take a snapshot of the etcd cluster on a healthy node.
- The script assume the healthy node is the second master node. (*-master-*1)
+<span style="font-size:30px;color:red;">**It is important to note that during the recovery process, the cluster will be temporarily unavailable.**</span>
+
+# 1. Take a snapshot of the etcd cluster on a **healthy** node.
+ The script assume the **healthy** node is the second master node. (\*-master-\*-1)
+
+ssh into the second control plane node.
+
+<span style="font-size:20px;color:yellow;">**Please replace the FQDN (akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com) of the public ip to your own environment.**</span>
+
+```
+ssh -p 2201 azureuser@akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com
+```
 
 ```
 sudo su
@@ -12,40 +25,69 @@ export ETCDCTL_KEY=/etc/kubernetes/certs/etcdclient.key
 etcdctl snapshot save /home/azureuser/snapshot.db
 chmod 644 /home/azureuser/snapshot.db
 ```
-# 2. Copy the snapshot to all other nodes to location /home/azureuser/snapshot.db
+# 2. Detach the etcd data disk from portal.
+## 2.1 Find the control plane node with corrupted etcd disk. (for example *-master-*-0) on portal.
+## 2.2 Stop the VM if it is still running
+### 2.2.1 Click the Refresh and Wait for the VM status from Deallocating to Stopped (deallocated)
+## 2.4 Go to Disks tab
+## 2.5 Noted down the disk information attached on LUN 0
+    - Name
+    - disk size
+    - storage account type
+    - tags
+## 2.6 Detch the etcd disk and click "Save"
+## 2.7 Wait for the operation completion.
+# 3. Find and delete the the etcd data disk from portal.
+# 4. Create and Attach the new created data disk to control plane VM 
+## 4.1 Find the control plane node with corrupted etcd disk. (for example *-master-*-0) on portal.
+## 4.2 Go to Disks tab
+## 4.3 Click "Add data disk" and esure that the **LUN number is 0**
+## 4.4 Choose "Create disk" in the dropdown list
+## 4.5 Create new empty data disk with same name, disk size, resource group, storage account type and tags.
+## 4.6 Wait for the disk creation to complete
+## 4.7 Click Save to update the control plane VM.
 
-## 2.1 copy the snapshot from the second master node to the jumpbox
-**Please replace the FQDN (akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com) of the public ip to your own environment.**
+# 5. Copy the snapshot to all other nodes to location /home/azureuser/snapshot.db
+
+## 5.1 copy the snapshot from the second master node to the jumpbox
+<span style="font-size:20px;color:yellow;">**Please replace the FQDN (akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com) of the public ip to your own environment.**</span>
 ```
 scp -P 2201 azureuser@akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com:/home/azureuser/snapshot.db .
 ```
 
-## 2.2 copy the snapshot into the first and third master
-**Please replace the FQDN (akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com) of the public ip to your own environment.**
+## 5.2 copy the snapshot into the first and third master
+<span style="font-size:20px;color:yellow;">**Please replace the FQDN (akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com) of the public ip to your own environment.**</span>
 ```
 scp -P 22 ./snapshot.db azureuser@akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com:/home/azureuser
 scp -P 2202 ./snapshot.db azureuser@akse0007.redmond.cloudapp.ext-n25r1304.masd.stbtest.microsoft.com:/home/azureuser
 ```
-# 3. Disable and Stop the etcd service on all threes masters node
+# 6. Disable and Stop the etcd service on all threes masters node
 Open ssh session to all three master node 
+
 ```
 sudo su
+```
+```
 systemctl disable etcd
+```
+```
 systemctl stop etcd
 ```
 
-# 4. Restore the etcd snap shot on all the master nodes
+# 7. Set the environment variables
 Reuse the SSH session in previous step
 
 
-## 4.1 Set environment variables for master
-**Please replace the FIRST_MASTER_IP,SECOND_MASTER_IP,THIRD_MASTER_IP with the value in your environment.**
+## 7.1 Set environment variables for master
+
+<span style="font-size:20px;color:yellow;">**Please replace the FIRST_MASTER_IP,SECOND_MASTER_IP,THIRD_MASTER_IP with the value in your environment.**</span>
+
 ```
 export FIRST_MASTER_IP=10.240.255.5
 export SECOND_MASTER_IP=10.240.255.6
 export THIRD_MASTER_IP=10.240.255.7
 ```
-## 4.2 set environment variables etcdctl command
+## 7.2 set environment variables etcdctl command
 ```
 export ETCDCTL_CERT=/etc/kubernetes/certs/etcdclient.crt
 export ETCDCTL_CACERT=/etc/kubernetes/certs/ca.crt
@@ -66,7 +108,7 @@ export ETCD_ADVERTISE_PEER_URLS="https://${HOST_IP}:2380"
 echo "ETCD_ADVERTISE_PEER_URLS $ETCD_ADVERTISE_PEER_URLS"
 
 ```
-## 4.2 restore the etcd database
+# 8 Restore the etcd snap shot on all the master nodes
 ```
 # Remove existing memeber data folder
 rm -r /var/lib/etcddisk/member
@@ -81,13 +123,15 @@ rm -r /var/lib/etcddisk/temp
 # Change the owner to etcd
 chown -R etcd:etcd /var/lib/etcddisk
 ```
-# 5. Start the etcd service all all master node and verify the service status
+# 9. Start the etcd service all all master node and verify the service status
 ```
 systemctl start etcd
 sleep 10
+```
+```
 systemctl status etcd
 ```
-# 6. Verify the the cluster status 
+# 10. Verify the the cluster status 
 
 ```
 etcdctl endpoint status --write-out=table
@@ -97,7 +141,7 @@ etcdctl endpoint status --write-out=table
 etcdctl endpoint health --write-out=table
 ```
 
-# 7 Enable the etcd service
+# 11 Enable the etcd service
 ```
 systemctl enable etcd
 ```
