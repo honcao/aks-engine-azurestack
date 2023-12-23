@@ -29,14 +29,14 @@ chmod 644 /home/azureuser/snapshot.db
 ## 2.1 Find the control plane node with corrupted etcd disk. (for example *-master-*-0) on portal.
 ## 2.2 Stop the VM if it is still running
 ### 2.2.1 Click the Refresh and Wait for the VM status from Deallocating to Stopped (deallocated)
-## 2.4 Go to Disks tab
-## 2.5 Noted down the disk information attached on LUN 0
+## 2.3 Go to Disks tab
+## 2.4 Noted down the disk information attached on LUN 0
     - Name
     - disk size
     - storage account type
     - tags
-## 2.6 Detch the etcd disk and click "Save"
-## 2.7 Wait for the operation completion.
+## 2.5 Detch the etcd disk and click "Save"
+## 2.6 Wait for the operation completion.
 # 3. Find and delete the the etcd data disk from portal.
 # 4. Create and Attach the new created data disk to control plane VM 
 ## 4.1 Find the control plane node with corrupted etcd disk. (for example *-master-*-0) on portal.
@@ -46,6 +46,7 @@ chmod 644 /home/azureuser/snapshot.db
 ## 4.5 Create new empty data disk with same name, disk size, resource group, storage account type and tags.
 ## 4.6 Wait for the disk creation to complete
 ## 4.7 Click Save to update the control plane VM.
+## 4.8 Start the control plane VM
 
 # 5. Copy the snapshot to all other nodes to location /home/azureuser/snapshot.db
 
