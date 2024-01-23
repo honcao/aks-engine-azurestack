@@ -13,7 +13,7 @@ KUBECONFIG="$(find /home/*/.kube/config)"
 KUBECTL="kubectl --kubeconfig=${KUBECONFIG}"
 
 MASTER_SELECTOR="kubernetes.azure.com/role=master,kubernetes.io/role!=master,node-role.kubernetes.io/master!="
-MASTER_LABELS="kubernetes.io/role=master node-role.kubernetes.io/master="
+MASTER_LABELS="kubernetes.io/role=master node-role.kubernetes.io/master= kubernetes.azure.com/role=control-plane kubernetes.io/role=control-plane node-role.kubernetes.io/control-plane="
 AGENT_SELECTOR="kubernetes.azure.com/role=agent,kubernetes.io/role!=agent,node-role.kubernetes.io/agent!="
 AGENT_LABELS="kubernetes.io/role=agent node-role.kubernetes.io/agent="
 

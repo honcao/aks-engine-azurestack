@@ -651,7 +651,7 @@ spec:
       serviceAccountName: csi-azuredisk-controller-sa
       nodeSelector:
         kubernetes.io/os: linux
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/control-plane: ""
       priorityClassName: system-cluster-critical
 {{- if IsKubernetesVersionGe "1.27.0"}}
       securityContext:
@@ -660,6 +660,9 @@ spec:
 {{- end}}
       tolerations:
         - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
           operator: "Exists"
           effect: "NoSchedule"
         - key: "node-role.kubernetes.io/controlplane"
@@ -899,8 +902,10 @@ spec:
 {{- end}}
       tolerations:
         - key: "node-role.kubernetes.io/master"
-          operator: "Equal"
-          value: "true"
+          operator: "Exists"
+          effect: "NoSchedule"      
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
           effect: "NoSchedule"
         - key: "node-role.kubernetes.io/controlplane"
           operator: "Equal"

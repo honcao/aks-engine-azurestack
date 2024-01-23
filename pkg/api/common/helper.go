@@ -293,7 +293,7 @@ func GetMasterKubernetesLabels(rg string, deprecated bool) string {
 	buf.WriteString(",node.kubernetes.io/exclude-disruption=true")
 	if deprecated {
 		buf.WriteString(",kubernetes.io/role=master")
-		buf.WriteString(",node-role.kubernetes.io/master=")
+		buf.WriteString(",node-role.kubernetes.io/control-plane=")
 	}
 	buf.WriteString(fmt.Sprintf(",kubernetes.azure.com/cluster=%s", rg))
 	return buf.String()
